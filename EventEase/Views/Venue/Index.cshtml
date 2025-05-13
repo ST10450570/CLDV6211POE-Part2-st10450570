@@ -1,42 +1,70 @@
 ﻿@model IEnumerable<EventEase.Models.Venue>
 
 @{
-    ViewData["Title"] = "Venues";
+    ViewData["Title"] = "EventEase Booking - Venues";
 }
 
-<h1>Venues</h1>
+<div class="d-flex justify-content-between align-items-center my-4">
+    <h1 class="h3 text-primary mb-0">Venues</h1>
+    <a asp-action="Create" class="btn btn-success">+ Add Venue</a>
+</div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
-
-<!-- Update the search form -->
-<form asp-action="Index" method="get">
-    <div class="input-group mb-3">
-        <input type="text" name="search" class="form-control" placeholder="Search venues..." value="@ViewData["CurrentFilter"]" />
-        <div class="input-group-append">
-            <button type="submit" class="btn btn-outline-secondary">Search</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
-        </div>
+<!-- TempData Alerts -->
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Message"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-</form>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
-<div class="row">
-    @foreach (var venue in Model)
-    {
-        <div class="col-md-4 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">@venue.VenueName</h5>
-                    <p class="card-text">@venue.Location</p>
-                    <p class="card-text"><strong>Capacity:</strong> @venue.Capacity</p>
-                    <div class="btn-group">
-                        <a asp-action="Details" asp-route-id="@venue.VenueId" class="btn btn-sm btn-primary">Details</a>
-                        <a asp-action="Edit" asp-route-id="@venue.VenueId" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Delete" asp-route-id="@venue.VenueId" class="btn btn-sm btn-danger">Delete</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+
+
+<!-- Venue Table -->
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-primary">
+            <tr>
+                <th style="width: 120px;">Image</th>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Capacity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var venue in Model)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(venue.ImageUrl))
+                        {
+                            <img src="@venue.ImageUrl" alt="@venue.VenueName" class="img-thumbnail rounded" style="max-height: 80px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No Image</span>
+                        }
+                    </td>
+                    <td class="fw-semibold">@venue.VenueName</td>
+                    <td>@venue.Location</td>
+                    <td>@venue.Capacity</td>
+                    <td>
+                        <div class="btn-group">
+                            <a asp-action="Details" asp-route-id="@venue.VenueId" class="btn btn-sm btn-outline-info">Details</a>
+                            <a asp-action="Edit" asp-route-id="@venue.VenueId" class="btn btn-sm btn-outline-warning">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@venue.VenueId" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

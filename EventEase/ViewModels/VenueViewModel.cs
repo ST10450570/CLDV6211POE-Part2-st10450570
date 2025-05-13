@@ -20,6 +20,7 @@ namespace EventEase.ViewModels
         public string? ExistingImageUrl { get; set; }
 
         [Display(Name = "Venue Image")]
+
         public IFormFile? ImageFile { get; set; }  // ✅ This is required for binding the uploaded image
     }
 }

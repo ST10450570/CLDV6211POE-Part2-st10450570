@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using EventEase.Data;
 using EventEase.Models;
 
-
 namespace EventEase.Controllers
 {
     public class BookingController : Controller
@@ -31,6 +30,7 @@ namespace EventEase.Controllers
             return View(bookings);
         }
 
+        // GET: Bookings/Search
         [HttpGet]
         public async Task<IActionResult> Search(string searchTerm)
         {
@@ -52,22 +52,16 @@ namespace EventEase.Controllers
         // GET: Bookings/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var booking = await _context.Bookings
                 .Include(b => b.Event)
                 .Include(b => b.Venue)
                 .FirstOrDefaultAsync(m => m.BookingId == id);
 
-            if (booking == null) // Null check added here
-            {
-                return NotFound();
-            }
+            if (booking == null) return NotFound();
 
-            return View(booking); // 'booking' is now guaranteed to be not null here
+            return View(booking);
         }
 
         // GET: Bookings/Create
@@ -85,7 +79,6 @@ namespace EventEase.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Check for duplicate bookings
                 bool duplicateExists = await _context.Bookings
                     .AnyAsync(b => b.VenueId == booking.VenueId &&
                                   b.BookingDate.Date == booking.BookingDate.Date);
@@ -98,11 +91,11 @@ namespace EventEase.Controllers
                     return View(booking);
                 }
 
-                // Set default status when creating a booking
-                booking.Status = "Active"; // Default status
+                booking.Status = "Active";
 
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
+                TempData["Message"] = "Booking created successfully.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -114,39 +107,27 @@ namespace EventEase.Controllers
         // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var booking = await _context.Bookings.FindAsync(id);
-
-            if (booking == null) // Null check added here
-            {
-                return NotFound();
-            }
+            if (booking == null) return NotFound();
 
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "EventName", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueName", booking.VenueId);
-            return View(booking); // 'booking' is now guaranteed to be not null here
+            return View(booking);
         }
-
 
         // POST: Bookings/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("BookingId,EventId,VenueId,BookingDate")] Booking booking)
         {
-            if (id != booking.BookingId)
-            {
-                return NotFound();
-            }
+            if (id != booking.BookingId) return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Part 2: Check for duplicate bookings (excluding this one)
                     bool duplicateExists = await _context.Bookings
                         .AnyAsync(b => b.BookingId != booking.BookingId &&
                                       b.VenueId == booking.VenueId &&
@@ -162,18 +143,16 @@ namespace EventEase.Controllers
 
                     _context.Update(booking);
                     await _context.SaveChangesAsync();
+                    TempData["Message"] = "Booking updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!BookingExists(booking.BookingId))
-                    {
                         return NotFound();
-                    }
                     else
-                    {
                         throw;
-                    }
                 }
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -182,62 +161,42 @@ namespace EventEase.Controllers
             return View(booking);
         }
 
-        // GET: Bookings/Delete/5
-       
+        // ✅ FIXED: GET: Bookings/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var booking = await _context.Bookings
                 .Include(b => b.Event)
                 .Include(b => b.Venue)
                 .FirstOrDefaultAsync(m => m.BookingId == id);
 
-            if (booking == null) // Null check added here
-            {
-                return NotFound();
-            }
+            if (booking == null) return NotFound();
 
-            // Check if booking is active (future date and status is Active)
-            if (booking.BookingDate >= DateTime.Today && booking.Status == "Active")
-            {
-                ViewBag.ErrorMessage = "This booking cannot be deleted because it is active (future date).";
-            }
-
-            return View(booking); // 'booking' is now guaranteed to be not null here
+            return View(booking);
         }
 
-
-        
-        // POST: Bookings/Delete/5
+        // ✅ FIXED: POST: Bookings/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var booking = await _context.Bookings.FindAsync(id);
-
-            if (booking == null) // Null check added here
+            if (booking != null)
             {
-                return NotFound(); // Or handle the case where the booking doesn't exist
+                _context.Bookings.Remove(booking);
+                await _context.SaveChangesAsync();
+                TempData["Message"] = "Booking deleted successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Booking not found.";
             }
 
-            // Prevent deletion of active (future) bookings
-            if (booking.BookingDate >= DateTime.Today && booking.Status == "Active")
-            {
-                ModelState.AddModelError(string.Empty, "Cannot delete active (future) bookings.");
-                return RedirectToAction("Delete", new { id = id });
-            }
-
-            _context.Bookings.Remove(booking);
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-
-        // Part 2: Search functionality
+        // Enhanced Search (Optional Extended Filters)
         public async Task<IActionResult> Search(string searchTerm, DateTime? startDate, DateTime? endDate, int? venueId, string status)
         {
             var bookingsQuery = _context.Bookings
@@ -280,7 +239,6 @@ namespace EventEase.Controllers
 
             return View("Index", await bookingsQuery.ToListAsync());
         }
-
 
         private bool BookingExists(int id)
         {

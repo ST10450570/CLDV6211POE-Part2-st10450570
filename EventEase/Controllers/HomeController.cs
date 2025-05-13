@@ -21,7 +21,7 @@ namespace EventEase.Controllers
         public async Task<IActionResult> Index()
         {
             // Ensure future events only and include venue info
-            var upcomingEvents = await _context.Events
+            var futureEvents = await _context.Events
                 .Include(e => e.Venue)
                 .Where(e => e.EventDate >= DateTime.Today)
                 .OrderBy(e => e.EventDate)
@@ -36,7 +36,7 @@ namespace EventEase.Controllers
 
             var viewModel = new HomeViewModel
             {
-                UpcomingEvents = upcomingEvents,
+                FutureEvents = futureEvents,
                 FeaturedVenues = featuredVenues
             };
 

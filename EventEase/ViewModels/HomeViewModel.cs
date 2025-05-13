@@ -5,7 +5,7 @@ namespace EventEase.Models
 {
     public class HomeViewModel
     {
-        public IEnumerable<Event>? UpcomingEvents { get; set; }
+        public IEnumerable<Event>? FutureEvents { get; set; }
         public IEnumerable<Venue>? FeaturedVenues { get; set; }
     }
 
