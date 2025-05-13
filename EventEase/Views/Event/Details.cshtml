@@ -1,0 +1,53 @@
+﻿@model EventEase.Models.Event
+
+@{
+    ViewData["Title"] = "Event Details";
+}
+
+<h1>Event Details</h1>
+
+<div class="row">
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div class="col-md-5">
+            <img src="@Model.ImageUrl" class="img-fluid rounded mb-3" style="max-height: 400px; object-fit: cover;" alt="@Model.EventName" />
+        </div>
+    }
+    <div class="@(!string.IsNullOrEmpty(Model.ImageUrl) ? "col-md-7" : "col-12")">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">@Model.EventName</h4>
+                <hr />
+                <dl class="row">
+                    <dt class="col-sm-4">
+                        @Html.DisplayNameFor(model => model.EventDate)
+                    </dt>
+                    <dd class="col-sm-8">
+                        @Model.EventDate.ToString("MMMM dd, yyyy")
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        @Html.DisplayNameFor(model => model.Description)
+                    </dt>
+                    <dd class="col-sm-8">
+                        @Html.DisplayFor(model => model.Description)
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        Venue Information
+                    </dt>
+                    <dd class="col-sm-8">
+                        <strong>@Model.Venue?.VenueName</strong><br />
+                        @Model.Venue?.Location<br />
+                        Capacity: @Model.Venue?.Capacity
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit" asp-route-id="@Model.EventId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

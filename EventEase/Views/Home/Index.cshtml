@@ -1,0 +1,51 @@
+﻿@model EventEase.Models.HomeViewModel
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to Event Ease</h1>
+    <p>Book venues for your events quickly and easily.</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <h2>Upcoming Events</h2>
+        <div class="list-group">
+            @if (Model.UpcomingEvents.Any())
+            {
+                @foreach (var item in Model.UpcomingEvents)
+                {
+                    <a asp-controller="Events" asp-action="Details" asp-route-id="@item.EventId" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">@item.EventName</h5>
+                            <small>@item.EventDate.ToString("MMMM dd, yyyy")</small>
+                        </div>
+                        <p class="mb-1">@item.Venue.VenueName</p>
+                    </a>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info">No upcoming events found.</div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <h2>Featured Venues</h2>
+        <div class="list-group">
+            @foreach (var venue in Model.FeaturedVenues)
+            {
+                <a asp-controller="Venues" asp-action="Details" asp-route-id="@venue.VenueId" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">@venue.VenueName</h5>
+                        <small>Capacity: @venue.Capacity</small>
+                    </div>
+                    <p class="mb-1">@venue.Location</p>
+                </a>
+            }
+        </div>
+    </div>
+</div>

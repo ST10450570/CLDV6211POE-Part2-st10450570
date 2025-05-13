@@ -1,0 +1,72 @@
+// 8. SITE.CSS
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    line-height: 60px;
+}
+
+/* Custom styles */
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-img {
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Venue and Event details */
+.venue-details-img, .event-details-img {
+    max-height: 300px;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Search box styles */
+.search-box {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Validation error styles */
+.validation-summary-errors {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Alert styles for Part 2 validation messages */
+.delete-alert {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
