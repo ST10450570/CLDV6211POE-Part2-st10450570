@@ -10,9 +10,10 @@ namespace EventEase.Data
         {
         }
 
-        public DbSet<EventEase.Models.Venue> Venues { get; set; }
-        public DbSet<EventEase.Models.Event> Events { get; set; }
-        public DbSet<EventEase.Models.Booking> Bookings { get; set; }
+        public DbSet<Venue> Venues { get; set; }
+        public DbSet<Event> Events { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<EventType> EventTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,13 +25,19 @@ namespace EventEase.Data
                 .HasOne(b => b.Event)
                 .WithMany(e => e.Bookings)
                 .HasForeignKey(b => b.EventId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Venue)
                 .WithMany(v => v.Bookings)
                 .HasForeignKey(b => b.VenueId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Event>()
+                .HasOne(e => e.EventType)
+                .WithMany()
+                .HasForeignKey(e => e.EventTypeId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // For validation: add a unique constraint for Event + Venue + Date combination
             modelBuilder.Entity<Booking>()

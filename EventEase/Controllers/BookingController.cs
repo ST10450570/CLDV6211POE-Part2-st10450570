@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -9,48 +8,66 @@ using EventEase.Data;
 using EventEase.Models;
 
 namespace EventEase.Controllers
-{
-    public class BookingController : Controller
     {
-        private readonly EventEaseDBContext _context;
-
-        public BookingController(EventEaseDBContext context)
+        public class BookingController : Controller
         {
-            _context = context;
-        }
+            private readonly EventEaseDBContext _context;
 
-        // GET: Bookings
-        public async Task<IActionResult> Index()
-        {
-            var bookings = await _context.Bookings
-                .Include(b => b.Event)
-                .Include(b => b.Venue)
-                .ToListAsync();
-
-            return View(bookings);
-        }
-
-        // GET: Bookings/Search
-        [HttpGet]
-        public async Task<IActionResult> Search(string searchTerm)
-        {
-            var bookingsQuery = _context.Bookings
-                .Include(b => b.Event)
-                .Include(b => b.Venue)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchTerm))
+            public BookingController(EventEaseDBContext context)
             {
-                bookingsQuery = bookingsQuery.Where(b =>
-                    b.BookingId.ToString().Contains(searchTerm) ||
-                    b.Event.EventName.Contains(searchTerm));
+                _context = context;
             }
 
-            return View("Index", await bookingsQuery.ToListAsync());
-        }
+            // GET: Bookings with advanced filtering
+            public async Task<IActionResult> Index(string searchTerm, int? eventTypeId,
+                DateTime? startDate, DateTime? endDate, bool? venueAvailability)
+            {
+                var bookingsQuery = _context.Bookings
+                    .Include(b => b.Event)
+                        .ThenInclude(e => e.EventType)
+                    .Include(b => b.Venue)
+                    .AsQueryable();
 
-        // GET: Bookings/Details/5
-        public async Task<IActionResult> Details(int? id)
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    bookingsQuery = bookingsQuery.Where(b =>
+                        b.BookingId.ToString().Contains(searchTerm) ||
+                        b.Event.EventName.Contains(searchTerm) ||
+                        b.Venue.VenueName.Contains(searchTerm));
+                }
+
+                if (eventTypeId.HasValue)
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.Event.EventTypeId == eventTypeId.Value);
+                }
+
+                if (startDate.HasValue)
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.BookingDate >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.BookingDate <= endDate.Value);
+                }
+
+                if (venueAvailability.HasValue)
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.Venue.Availability == venueAvailability.Value);
+                }
+
+                ViewData["EventTypes"] = new SelectList(_context.EventTypes, "EventTypeId", "EventTypeName", eventTypeId);
+                ViewData["SearchTerm"] = searchTerm;
+                ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+                ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+                ViewData["VenueAvailability"] = venueAvailability;
+
+                return View(await bookingsQuery.ToListAsync());
+            }
+
+
+            // GET: Bookings/Details/5
+            public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
@@ -81,7 +98,7 @@ namespace EventEase.Controllers
             {
                 bool duplicateExists = await _context.Bookings
                     .AnyAsync(b => b.VenueId == booking.VenueId &&
-                                  b.BookingDate.Date == booking.BookingDate.Date);
+                                   b.BookingDate.Date == booking.BookingDate.Date);
 
                 if (duplicateExists)
                 {
@@ -130,8 +147,8 @@ namespace EventEase.Controllers
                 {
                     bool duplicateExists = await _context.Bookings
                         .AnyAsync(b => b.BookingId != booking.BookingId &&
-                                      b.VenueId == booking.VenueId &&
-                                      b.BookingDate.Date == booking.BookingDate.Date);
+                                       b.VenueId == booking.VenueId &&
+                                       b.BookingDate.Date == booking.BookingDate.Date);
 
                     if (duplicateExists)
                     {
@@ -161,7 +178,7 @@ namespace EventEase.Controllers
             return View(booking);
         }
 
-        // ✅ FIXED: GET: Bookings/Delete/5
+        // GET: Bookings/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -176,7 +193,7 @@ namespace EventEase.Controllers
             return View(booking);
         }
 
-        // ✅ FIXED: POST: Bookings/Delete/5
+        // POST: Bookings/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -194,50 +211,6 @@ namespace EventEase.Controllers
             }
 
             return RedirectToAction(nameof(Index));
-        }
-
-        // Enhanced Search (Optional Extended Filters)
-        public async Task<IActionResult> Search(string searchTerm, DateTime? startDate, DateTime? endDate, int? venueId, string status)
-        {
-            var bookingsQuery = _context.Bookings
-                .Include(b => b.Event)
-                .Include(b => b.Venue)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                bookingsQuery = bookingsQuery.Where(b =>
-                    b.Event.EventName.Contains(searchTerm) ||
-                    b.Venue.VenueName.Contains(searchTerm));
-            }
-
-            if (startDate.HasValue)
-            {
-                bookingsQuery = bookingsQuery.Where(b => b.BookingDate >= startDate.Value);
-            }
-
-            if (endDate.HasValue)
-            {
-                bookingsQuery = bookingsQuery.Where(b => b.BookingDate <= endDate.Value);
-            }
-
-            if (venueId.HasValue)
-            {
-                bookingsQuery = bookingsQuery.Where(b => b.VenueId == venueId.Value);
-            }
-
-            if (!string.IsNullOrEmpty(status))
-            {
-                bookingsQuery = bookingsQuery.Where(b => b.Status == status);
-            }
-
-            ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "VenueName", venueId);
-            ViewData["SearchTerm"] = searchTerm;
-            ViewData["StartDate"] = startDate;
-            ViewData["EndDate"] = endDate;
-            ViewData["Status"] = status;
-
-            return View("Index", await bookingsQuery.ToListAsync());
         }
 
         private bool BookingExists(int id)

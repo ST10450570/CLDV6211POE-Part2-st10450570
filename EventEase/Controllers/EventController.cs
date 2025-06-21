@@ -23,11 +23,49 @@ namespace EventEase.Controllers
             _imageService = imageService;
         }
 
-        // GET: Events
-        public async Task<IActionResult> Index()
+        // GET: Events with filtering
+        public async Task<IActionResult> Index(string searchTerm, int? eventTypeId, DateTime? startDate,
+            DateTime? endDate, bool? venueAvailability)
         {
-            var events = await _context.Events.Include(e => e.Venue).ToListAsync();
-            return View(events);
+            var eventsQuery = _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.EventType)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                eventsQuery = eventsQuery.Where(e =>
+                    e.EventName.Contains(searchTerm) ||
+                    e.Description.Contains(searchTerm));
+            }
+
+            if (eventTypeId.HasValue)
+            {
+                eventsQuery = eventsQuery.Where(e => e.EventTypeId == eventTypeId.Value);
+            }
+
+            if (startDate.HasValue)
+            {
+                eventsQuery = eventsQuery.Where(e => e.EventDate >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                eventsQuery = eventsQuery.Where(e => e.EventDate <= endDate.Value);
+            }
+
+            if (venueAvailability.HasValue)
+            {
+                eventsQuery = eventsQuery.Where(e => e.Venue.Availability == venueAvailability.Value);
+            }
+
+            ViewData["EventTypes"] = new SelectList(_context.EventTypes, "EventTypeId", "EventTypeName", eventTypeId);
+            ViewData["SearchTerm"] = searchTerm;
+            ViewData["StartDate"] = startDate?.ToString("yyyy-MM-dd");
+            ViewData["EndDate"] = endDate?.ToString("yyyy-MM-dd");
+            ViewData["VenueAvailability"] = venueAvailability;
+
+            return View(await eventsQuery.ToListAsync());
         }
 
         // GET: Events/Details/5
@@ -35,7 +73,9 @@ namespace EventEase.Controllers
         {
             if (id == null) return NotFound();
 
-            var @event = await _context.Events.Include(e => e.Venue)
+            var @event = await _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.EventType)
                 .FirstOrDefaultAsync(m => m.EventId == id);
 
             if (@event == null) return NotFound();
@@ -52,6 +92,11 @@ namespace EventEase.Controllers
                 {
                     Value = v.VenueId.ToString(),
                     Text = v.VenueName
+                }).ToList(),
+                EventTypeList = _context.EventTypes.Select(et => new SelectListItem
+                {
+                    Value = et.EventTypeId.ToString(),
+                    Text = et.EventTypeName
                 }).ToList(),
                 EventDate = DateTime.Today
             };
@@ -71,7 +116,8 @@ namespace EventEase.Controllers
                     EventName = eventViewModel.EventName,
                     EventDate = eventViewModel.EventDate,
                     Description = eventViewModel.Description,
-                    VenueId = eventViewModel.VenueId
+                    VenueId = eventViewModel.VenueId,
+                    EventTypeId = eventViewModel.EventTypeId
                 };
 
                 if (eventViewModel.ImageFile != null && eventViewModel.ImageFile.Length > 0)
@@ -88,6 +134,12 @@ namespace EventEase.Controllers
             {
                 Value = v.VenueId.ToString(),
                 Text = v.VenueName
+            }).ToList();
+
+            eventViewModel.EventTypeList = _context.EventTypes.Select(et => new SelectListItem
+            {
+                Value = et.EventTypeId.ToString(),
+                Text = et.EventTypeName
             }).ToList();
 
             return View(eventViewModel);
@@ -108,12 +160,19 @@ namespace EventEase.Controllers
                 EventDate = @event.EventDate,
                 Description = @event.Description,
                 VenueId = @event.VenueId,
+                EventTypeId = @event.EventTypeId,
                 ExistingImageUrl = @event.ImageUrl,
                 VenueList = _context.Venues.Select(v => new SelectListItem
                 {
                     Value = v.VenueId.ToString(),
                     Text = v.VenueName,
                     Selected = v.VenueId == @event.VenueId
+                }).ToList(),
+                EventTypeList = _context.EventTypes.Select(et => new SelectListItem
+                {
+                    Value = et.EventTypeId.ToString(),
+                    Text = et.EventTypeName,
+                    Selected = et.EventTypeId == @event.EventTypeId
                 }).ToList()
             };
 
@@ -136,10 +195,10 @@ namespace EventEase.Controllers
                     @event.EventDate = eventViewModel.EventDate;
                     @event.Description = eventViewModel.Description;
                     @event.VenueId = eventViewModel.VenueId;
+                    @event.EventTypeId = eventViewModel.EventTypeId;
 
                     if (eventViewModel.ImageFile != null && eventViewModel.ImageFile.Length > 0)
                     {
-                        // Delete old image if exists
                         if (!string.IsNullOrEmpty(@event.ImageUrl))
                         {
                             await _imageService.DeleteImageAsync(@event.ImageUrl);
@@ -169,6 +228,11 @@ namespace EventEase.Controllers
                             Value = v.VenueId.ToString(),
                             Text = v.VenueName
                         }).ToList();
+                        eventViewModel.EventTypeList = _context.EventTypes.Select(et => new SelectListItem
+                        {
+                            Value = et.EventTypeId.ToString(),
+                            Text = et.EventTypeName
+                        }).ToList();
                         return View(eventViewModel);
                     }
                     throw;
@@ -181,6 +245,12 @@ namespace EventEase.Controllers
                 Text = v.VenueName
             }).ToList();
 
+            eventViewModel.EventTypeList = _context.EventTypes.Select(et => new SelectListItem
+            {
+                Value = et.EventTypeId.ToString(),
+                Text = et.EventTypeName
+            }).ToList();
+
             return View(eventViewModel);
         }
 
@@ -189,7 +259,9 @@ namespace EventEase.Controllers
         {
             if (id == null) return NotFound();
 
-            var @event = await _context.Events.Include(e => e.Venue)
+            var @event = await _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.EventType)
                 .FirstOrDefaultAsync(m => m.EventId == id);
 
             if (@event == null) return NotFound();
@@ -217,7 +289,6 @@ namespace EventEase.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Delete associated image if exists
             if (!string.IsNullOrEmpty(eventToDelete.ImageUrl))
             {
                 await _imageService.DeleteImageAsync(eventToDelete.ImageUrl);

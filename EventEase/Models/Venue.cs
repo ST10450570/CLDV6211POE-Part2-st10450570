@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using EventEase.Models;
 
 namespace EventEase.Models
 {
@@ -24,6 +23,9 @@ namespace EventEase.Models
 
         [Display(Name = "Venue Image")]
         public string? ImageUrl { get; set; }
+
+        [Display(Name = "Available")]
+        public bool Availability { get; set; } = true;
 
         // Navigation properties
         public virtual ICollection<Event>? Events { get; set; }

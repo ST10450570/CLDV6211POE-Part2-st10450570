@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using EventEase.Models;
 
 namespace EventEase.Models
 {
@@ -29,6 +28,8 @@ namespace EventEase.Models
         [Display(Name = "Venue")]
         public int VenueId { get; set; }
 
+        [Display(Name = "Event Type")]
+        public int? EventTypeId { get; set; }
 
         [Display(Name = "Event Image")]
         public string? ImageUrl { get; set; }
@@ -36,6 +37,9 @@ namespace EventEase.Models
         // Navigation properties
         [ForeignKey("VenueId")]
         public virtual Venue? Venue { get; set; }
+
+        [ForeignKey("EventTypeId")]
+        public virtual EventType? EventType { get; set; }
 
         public virtual ICollection<Booking>? Bookings { get; set; }
     }

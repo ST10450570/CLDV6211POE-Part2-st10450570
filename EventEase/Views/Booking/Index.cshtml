@@ -25,16 +25,40 @@
     </div>
 }
 
-<!-- Search Box -->
+<!-- Filter Section -->
 <div class="card mb-4 shadow-sm border-0">
     <div class="card-header bg-light">
-        <h5 class="mb-0">Search Bookings</h5>
+        <h5 class="mb-0">Filter Bookings</h5>
     </div>
     <div class="card-body">
-        <form asp-action="Search" method="get">
-            <div class="input-group">
-                <input type="text" name="searchTerm" class="form-control" placeholder="Search by Booking ID or Event Name" />
-                <button type="submit" class="btn btn-outline-primary">Search</button>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="searchTerm" class="form-control" placeholder="Search bookings..."
+                       value="@ViewData["SearchTerm"]" />
+            </div>
+            <div class="col-md-3">
+                <select name="eventTypeId" class="form-select" asp-items="ViewBag.EventTypes">
+                    <option value="">All Event Types</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="startDate" class="form-control"
+                       value="@ViewData["StartDate"]" placeholder="From date" />
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="endDate" class="form-control"
+                       value="@ViewData["EndDate"]" placeholder="To date" />
+            </div>
+            <div class="col-md-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="venueAvailability"
+                           id="venueAvailability" value="true"
+                    @(ViewData["VenueAvailability"] != null && (bool)ViewData["VenueAvailability"] ? "checked" : "") />
+                    <label class="form-check-label" for="venueAvailability">Available</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Filter</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
             </div>
         </form>
@@ -42,51 +66,60 @@
 </div>
 
 <!-- Booking Table -->
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-primary">
-            <tr>
-                <th>Booking ID</th>
-                <th>Event</th>
-                <th>Venue</th>
-                <th>Event Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No bookings found matching your criteria.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-primary">
                 <tr>
-                    <td>@item.BookingId</td>
-                    <td>@item.Event?.EventName</td>
-                    <td>@item.Venue?.VenueName</td>
-                    <td>@item.BookingDate.ToString("MMMM dd, yyyy")</td>
-                    <td>
-                        @if (string.IsNullOrEmpty(item.Status))
-                        {
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        }
-                        else
-                        {
-                            <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
-                        }
-                    </td>
-                    <td>
-                        <div class="btn-group">
-                            <a asp-action="Details" asp-route-id="@item.BookingId" class="btn btn-sm btn-outline-info">Details</a>
-                            <a asp-action="Edit" asp-route-id="@item.BookingId" class="btn btn-sm btn-outline-warning">Edit</a>
-                            <form asp-action="Delete" asp-route-id="@item.BookingId" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this booking?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                            </form>
-                        </div>
-                    </td>
+                    <th>Booking ID</th>
+                    <th>Event</th>
+                    <th>Event Type</th>
+                    <th>Venue</th>
+                    <th>Event Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.BookingId</td>
+                        <td>@item.Event?.EventName</td>
+                        <td>@item.Event?.EventType?.EventTypeName</td>
+                        <td>@item.Venue?.VenueName</td>
+                        <td>@item.BookingDate.ToString("MMMM dd, yyyy")</td>
+                        <td>
+                            @if (string.IsNullOrEmpty(item.Status))
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                            else
+                            {
+                                <span class="badge @GetStatusBadgeClass(item.Status)">@item.Status</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a asp-action="Details" asp-route-id="@item.BookingId" class="btn btn-sm btn-outline-info">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.BookingId" class="btn btn-sm btn-outline-warning">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@item.BookingId" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this booking?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @functions {
     string GetStatusBadgeClass(string status)
